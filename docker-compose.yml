@@ -1,0 +1,17 @@
+services:
+  aliyun-supabase-mcp:
+    build: .
+    image: aliyun-supabase-mcp:latest
+    stdin_open: true
+    tty: true
+    environment:
+      ALIYUN_ACCESS_KEY_ID: ${ALIYUN_ACCESS_KEY_ID}
+      ALIYUN_ACCESS_KEY_SECRET: ${ALIYUN_ACCESS_KEY_SECRET}
+      ALIYUN_ACCESS_TOKEN: ${ALIYUN_ACCESS_TOKEN:-}
+      ALIYUN_REGION_ID: ${ALIYUN_REGION_ID:-cn-hangzhou}
+      SUPABASE_DB_PASSWORD: ${SUPABASE_DB_PASSWORD:-}
+      SUPABASE_CLI_TIMEOUT: ${SUPABASE_CLI_TIMEOUT:-120}
+      SUPABASE_CLI_MAX_TIMEOUT: ${SUPABASE_CLI_MAX_TIMEOUT:-600}
+      SUPABASE_WORKDIR: /workspace
+    volumes:
+      - ./workspace:/workspace
