@@ -6,7 +6,10 @@ from typing import Any
 from mcp.server.fastmcp import FastMCP
 
 
-mcp = FastMCP("aliyun-supabase-cli")
+MCP_HOST = os.getenv("MCP_HOST", "0.0.0.0")
+MCP_PORT = int(os.getenv("MCP_PORT", "8000"))
+
+mcp = FastMCP("aliyun-supabase-cli", host=MCP_HOST, port=MCP_PORT)
 
 DEFAULT_TIMEOUT = int(os.getenv("SUPABASE_CLI_TIMEOUT", "120"))
 MAX_TIMEOUT = int(os.getenv("SUPABASE_CLI_MAX_TIMEOUT", "600"))
@@ -276,4 +279,4 @@ def generate_types(language: str, project_ref: str, password: str | None = None)
 
 
 if __name__ == "__main__":
-    mcp.run(transport=os.getenv("MCP_TRANSPORT", "stdio"))
+    mcp.run(transport=os.getenv("MCP_TRANSPORT", "sse"))

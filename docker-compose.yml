@@ -13,5 +13,10 @@ services:
       SUPABASE_CLI_TIMEOUT: ${SUPABASE_CLI_TIMEOUT:-120}
       SUPABASE_CLI_MAX_TIMEOUT: ${SUPABASE_CLI_MAX_TIMEOUT:-600}
       SUPABASE_WORKDIR: /workspace
+      MCP_HOST: 0.0.0.0
+      MCP_PORT: ${MCP_PORT:-8000}
+      MCP_TRANSPORT: ${MCP_TRANSPORT:-sse}
+    ports:
+      - "${MCP_PORT:-8000}:8000"
     volumes:
       - ./workspace:/workspace

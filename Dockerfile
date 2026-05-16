@@ -29,4 +29,10 @@ RUN mkdir -p /workspace
 
 WORKDIR /workspace
 
+ENV MCP_HOST=0.0.0.0
+ENV MCP_PORT=8000
+ENV MCP_TRANSPORT=sse
+
+EXPOSE 8000
+
 ENTRYPOINT ["python", "/app/server.py"]

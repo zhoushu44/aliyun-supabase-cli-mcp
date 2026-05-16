@@ -1,6 +1,8 @@
 # Aliyun Supabase CLI MCP Server
 
-这个项目把阿里云 AnalyticDB Supabase CLI 封装成 MCP 工具，并提供 Docker 化部署文件，适合部署到服务器后由支持 MCP 的客户端通过容器 stdio 调用。
+这个项目把阿里云 AnalyticDB Supabase CLI 封装成 MCP 工具，并提供 Docker 化部署与 GitHub Actions 自动构建推送配置，适合部署到服务器后通过 SSE 方式访问。
+
+<https://help.aliyun.com/zh/analyticdb/analyticdb-for-postgresql/supabase-cli-usage-guide?spm=a2c4g.11186623.help-menu-92664.d_2_1_7.21524d4eb5uEls&scm=20140722.H_3029803._.OR_help-T_cn~zh-V_1>
 
 ## 功能范围
 
@@ -42,32 +44,52 @@ cp .env.example .env
 - `SUPABASE_DB_PASSWORD`：默认数据库密码，部分命令仍建议显式传参
 - `SUPABASE_CLI_TIMEOUT`：单次命令默认超时时间
 - `SUPABASE_CLI_MAX_TIMEOUT`：单次命令最大超时时间
+- `MCP_PORT`：服务端口，默认 `8000`
+- `MCP_TRANSPORT`：默认 `sse`
 
 ## MCP 客户端配置示例
 
-使用 Docker 运行 stdio MCP 服务：
+服务默认监听 `0.0.0.0:8000`，Docker Compose 会映射到宿主机同端口。
+
+```bash
+docker compose up -d
+```
+
+远程 MCP 地址：
+
+```text
+http://服务器IP:8000/sse
+```
+
+如果你的客户端需要 JSON 配置，可以使用类似配置：
 
 ```json
 {
   "mcpServers": {
     "aliyun-supabase": {
-      "command": "docker",
-      "args": [
-        "run",
-        "--rm",
-        "-i",
-        "--env-file",
-        "/absolute/path/to/.env",
-        "-v",
-        "/absolute/path/to/workspace:/workspace",
-        "aliyun-supabase-mcp:latest"
-      ]
+      "url": "http://服务器IP:8000/sse"
     }
   }
 }
 ```
 
-服务器部署时，把 `/absolute/path/to/.env` 和 `/absolute/path/to/workspace` 替换成服务器上的绝对路径。
+## GitHub Actions 自动推送
+
+已提供 `.github/workflows/docker-publish.yml`，push 到 `main` 分支会自动构建同一个 Docker 镜像，并推送到 Docker Hub。镜像推送只由 GitHub Actions 完成，本地不需要执行任何 `docker push`。
+
+仓库 Secrets 需要配置：
+
+- `DOCKER_HUB_USERNAME`
+- `DOCKER_HUB_TOKEN`
+
+推送后的镜像名：
+
+```text
+DOCKER_HUB_USERNAME/aliyun-supabase-mcp:latest
+DOCKER_HUB_USERNAME/aliyun-supabase-mcp:1.0
+```
+
+`latest` 和 `1.0` 指向同一次 GitHub Actions 构建产物。
 
 ## 常用工具调用示例
 
@@ -98,16 +120,37 @@ cp .env.example .env
 
 ## 服务器部署
 
+从 Docker Hub 拉取 GitHub Actions 推送的镜像：
+
 ```bash
-docker compose build
-docker compose run --rm aliyun-supabase-mcp
+docker pull DOCKER_HUB_USERNAME/aliyun-supabase-mcp:1.0
 ```
 
-MCP 的 stdio 模式需要由 MCP 客户端启动容器并保持标准输入输出连接；不要把它当成普通 HTTP 服务暴露端口。
+运行服务：
+
+```bash
+docker run -d \
+  --name aliyun-supabase-mcp \
+  --restart unless-stopped \
+  --env-file .env \
+  -p 8000:8000 \
+  -v $(pwd)/workspace:/workspace \
+  DOCKER_HUB_USERNAME/aliyun-supabase-mcp:1.0
+```
+
+如果需要在服务器上自行构建，也可以使用：
+
+```bash
+docker compose build
+docker compose up -d
+```
+
+服务监听地址为 `0.0.0.0`，默认端口 `8000`。
 
 ## 安全建议
 
 - 不要把 `.env` 提交到代码仓库
+- `.dockerignore` 已排除 `.env`，避免真实密钥进入 Docker 构建上下文
 - 服务器上限制 `.env` 文件权限
 - 删除项目、重置密码、设置密钥等高风险操作建议只授予可信客户端使用
 - `supabase_cli` 只允许文档中的 Supabase 根命令，避免任意系统命令执行
