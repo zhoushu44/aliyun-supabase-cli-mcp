@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.1 - 2026-05-17
+
+### Added
+
+- 新增 `master` 分支触发 GitHub Actions 构建。
+- 新增 Windows 本地调试支持，通过 Docker exec 调用容器内阿里云 Supabase CLI。
+
+### Changed
+
+- 更新 Docker 镜像版本标签为 `1.1` 和 `latest`。
+- 修复 `_redact()` 函数处理 `None` 值时的异常。
+- 修复 Windows 下默认工作目录不存在的问题，改用脚本目录作为默认工作目录。
+- 完善 README 中文文档，区分本地版和 Docker 版使用方式。
+- 补充宝塔面板一键部署详细说明。
+
 ## 1.0 - 2026-05-17
 
 ### Added

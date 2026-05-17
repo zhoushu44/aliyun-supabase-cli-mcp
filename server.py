@@ -41,7 +41,9 @@ def _db_password(password: str | None = None) -> str:
     return resolved
 
 
-def _redact(value: str) -> str:
+def _redact(value: str | None) -> str | None:
+    if value is None:
+        return None
     redacted = value
     for name in SENSITIVE_ENV_NAMES:
         secret = os.getenv(name)
@@ -50,15 +52,38 @@ def _redact(value: str) -> str:
     return redacted
 
 
+def _get_supabase_path() -> str:
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    if os.name == "nt":
+        local_path = os.path.join(script_dir, "supabase.exe")
+    else:
+        local_path = os.path.join(script_dir, "supabase")
+    if os.path.isfile(local_path):
+        return local_path
+    return "supabase"
+
+
+SUPABASE_PATH = _get_supabase_path()
+
+
 def _run_supabase(args: list[str], timeout: int | None = None, cwd: str | None = None) -> dict[str, Any]:
     if not args:
         raise ValueError("args 不能为空")
     if args[0] not in ALLOWED_ROOT_COMMANDS:
         raise ValueError(f"不允许执行 supabase {args[0]}，允许的根命令为：{', '.join(sorted(ALLOWED_ROOT_COMMANDS))}")
     safe_timeout = min(timeout or DEFAULT_TIMEOUT, MAX_TIMEOUT)
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    default_workdir = os.getenv("SUPABASE_WORKDIR") or script_dir
+    
+    if os.name == "nt" and not os.path.isfile(SUPABASE_PATH):
+        container_name = os.getenv("SUPABASE_CONTAINER", "aliyun-supabase-cli-mcp-aliyun-supabase-mcp-1")
+        cmd_args = ["docker", "exec", container_name, "supabase"] + args
+    else:
+        cmd_args = [SUPABASE_PATH] + args
+    
     process = subprocess.run(
-        ["supabase", *args],
-        cwd=cwd or os.getenv("SUPABASE_WORKDIR", "/workspace"),
+        cmd_args,
+        cwd=cwd or default_workdir,
         text=True,
         capture_output=True,
         timeout=safe_timeout,
@@ -67,8 +92,8 @@ def _run_supabase(args: list[str], timeout: int | None = None, cwd: str | None =
     return {
         "command": "supabase " + " ".join(shlex.quote(arg) for arg in args),
         "exit_code": process.returncode,
-        "stdout": _redact(process.stdout),
-        "stderr": _redact(process.stderr),
+        "stdout": _redact(process.stdout or ""),
+        "stderr": _redact(process.stderr or ""),
     }
 
 
