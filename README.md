@@ -519,13 +519,13 @@ Trae 连接域名时使用：
 
 ```text
 DOCKER_HUB_USERNAME/aliyun-supabase-mcp:latest
-DOCKER_HUB_USERNAME/aliyun-supabase-mcp:1.1
+DOCKER_HUB_USERNAME/aliyun-supabase-mcp:1.2
 ```
 
 服务器可以直接拉取镜像：
 
 ```bash
-docker pull DOCKER_HUB_USERNAME/aliyun-supabase-mcp:1.1
+docker pull DOCKER_HUB_USERNAME/aliyun-supabase-mcp:1.2
 ```
 
 ## 常见问题
